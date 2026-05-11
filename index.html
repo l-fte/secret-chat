@@ -280,7 +280,7 @@ function cancelReply() {
   document.getElementById('replyPreview').classList.remove('active');
 }
 
-// مسح الرسالة بخطوتين (تأكيد المتصفح)
+// مسح الرسالة بخطوتين (تأكيد المتصفح) مع الحذف الفوري
 async function deleteMessage(msgId) {
   // الخطوة الثانية: رسالة التأكيد
   if (!confirm('هل أنت متأكد أنك تريد مسح هذه الرسالة؟')) return;
@@ -291,6 +291,9 @@ async function deleteMessage(msgId) {
     console.error(error); 
   } else {
     showToast('✓ تم مسح الرسالة');
+    // إخفاء الرسالة فوراً من الشاشة عندك
+    const msgDiv = document.getElementById('msg-' + msgId);
+    if (msgDiv) msgDiv.remove();
   }
 }
 
@@ -349,19 +352,22 @@ async function loadMsgs() {
   renderAll(data || []);
 }
 
+// استقبال الرسائل والإشعارات المباشرة وتعديلها لتشمل أمر الحذف للطرف الآخر
 function subscribeRealtime() {
   if (sub) db.removeChannel(sub);
   sub = db.channel('room:' + currentRoom)
     .on('postgres_changes', {
-      event: '*', // يستقبل كل الأحداث (الإضافة والمسح)
+      event: '*', // يستقبل كل الأحداث (الإضافة والمسح) بدون فلتر الغرفة لضمان عمل الـ DELETE
       schema: 'public',
-      table: 'messages',
-      filter: 'room=eq.' + currentRoom
+      table: 'messages'
     }, payload => {
       if (payload.eventType === 'INSERT') {
-        appendMsg(payload.new);
+        // نفلتر الغرفة برمجياً هنا
+        if (payload.new.room === currentRoom) {
+          appendMsg(payload.new);
+        }
       } else if (payload.eventType === 'DELETE') {
-        // إذا استلمنا أمر مسح، نخفي الرسالة من الشاشة فوراً
+        // إذا استلمنا أمر مسح من الطرف الآخر، نخفي الرسالة فوراً
         const msgDiv = document.getElementById('msg-' + payload.old.id);
         if (msgDiv) msgDiv.remove();
       }
