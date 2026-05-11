@@ -39,8 +39,8 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-s
 .c-time{font-size:11px;color:var(--dim)}
 
 /* CHAT */
-.chat{flex:1;display:flex;flex-direction:column;background:var(--bg)}
-.c-head{padding:12px 20px;background:var(--header);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.chat{flex:1;display:flex;flex-direction:column;background:var(--bg);position:relative;}
+.c-head{padding:12px 20px;background:var(--header);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;z-index:10;}
 .c-head-info{flex:1}
 .c-head-name{font-size:16px;font-weight:700}
 .c-head-status{font-size:12px;color:var(--green)}
@@ -48,7 +48,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-s
 .h-btn:hover{color:var(--purple-l);background:rgba(139,92,246,.15)}
 
 /* FONT TOGGLE BAR */
-.ftoggle{display:flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(139,92,246,.08);border-bottom:1px solid var(--border);font-size:12px;color:var(--dim)}
+.ftoggle{display:flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(139,92,246,.08);border-bottom:1px solid var(--border);font-size:12px;color:var(--dim);z-index:10;}
 .switch{position:relative;width:36px;height:20px;cursor:pointer;flex-shrink:0}
 .switch input{display:none}
 .track{position:absolute;inset:0;background:var(--border);border-radius:10px;transition:background .2s}
@@ -76,8 +76,29 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-s
 .msg-img{max-width:220px;border-radius:12px;cursor:pointer;display:block;margin-bottom:4px}
 .sender-name{font-size:11px;color:var(--purple-l);margin-bottom:3px}
 
+/* REPLY BUTTON IN MESSAGE */
+.reply-btn { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; opacity: 0.6; transition: opacity 0.2s, color 0.2s; padding: 0 4px; }
+.reply-btn:hover { opacity: 1; color: var(--purple-l); }
+
+/* REPLY BUBBLE INSIDE MESSAGE */
+.msg-reply { background: rgba(0,0,0,0.15); border-right: 3px solid var(--purple-l); padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; cursor: pointer; }
+.msg-reply-sender { color: var(--purple-l); font-weight: bold; margin-bottom: 2px; }
+.msg-reply-text { color: rgba(255,255,255,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.them .msg-reply { border-right-color: var(--dim); background: rgba(255,255,255,0.05); }
+.them .msg-reply-sender { color: var(--dim); }
+
+/* REPLY PREVIEW BAR (ABOVE INPUT) */
+.reply-preview { display: none; padding: 10px 16px; background: var(--header); border-top: 1px solid var(--border); align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; border-right: 3px solid var(--purple-l); }
+.reply-preview.active { display: flex; animation: slideUp 0.2s ease; }
+@keyframes slideUp { from{ transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.rp-content { flex: 1; overflow: hidden; }
+.rp-sender { color: var(--purple-l); font-weight: bold; margin-bottom: 2px; }
+.rp-text { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-close { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 16px; padding: 4px; border-radius: 50%; transition: 0.2s; }
+.rp-close:hover { color: #ff4757; background: rgba(255,71,87,0.1); }
+
 /* INPUT */
-.input-area{padding:12px 16px;background:var(--header);border-top:1px solid var(--border);display:flex;align-items:flex-end;gap:10px}
+.input-area{padding:12px 16px;background:var(--header);border-top:1px solid var(--border);display:flex;align-items:flex-end;gap:10px;z-index:10;}
 .i-btn{background:none;border:none;color:var(--dim);cursor:pointer;font-size:20px;padding:8px;border-radius:50%;transition:color .15s,background .15s;flex-shrink:0}
 .i-btn:hover{color:var(--purple-l);background:rgba(139,92,246,.15)}
 .msg-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:22px;padding:10px 16px;color:var(--text);font-size:15px;outline:none;resize:none;max-height:120px;min-height:44px;font-family:inherit;line-height:1.4;transition:border-color .15s}
@@ -109,7 +130,6 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-s
 
 <div class="toast" id="toast"></div>
 
-<!-- MODAL -->
 <div class="overlay" id="modal">
   <div class="modal">
     <div style="font-size:44px;text-align:center">🔐</div>
@@ -124,7 +144,6 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-s
   </div>
 </div>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
   <div class="s-head">
     <div class="logo">🌙</div>
@@ -145,7 +164,6 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-s
   </div>
 </div>
 
-<!-- CHAT -->
 <div class="chat">
   <div class="c-head">
     <div class="avatar online">🌟</div>
@@ -176,6 +194,14 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,sans-s
     </div>
   </div>
 
+  <div class="reply-preview" id="replyPreview">
+    <div class="rp-content">
+      <div class="rp-sender" id="rpSender">اسم المرسل</div>
+      <div class="rp-text" id="rpText">نص الرسالة...</div>
+    </div>
+    <button class="rp-close" onclick="cancelReply()" title="إلغاء الرد">✖</button>
+  </div>
+
   <div class="input-area">
     <label class="i-btn" title="إرسال صورة">
       📎<input type="file" accept="image/*" id="imgFile" style="display:none" onchange="sendImg(event)"/>
@@ -194,6 +220,7 @@ const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let myName = '', currentRoom = 'room1', useCustomFont = false, sub = null;
+let replyingTo = null; // متغير لحفظ معلومات الرسالة اللي دترد عليها
 
 // INIT
 document.getElementById('enterBtn').onclick = startChat;
@@ -244,20 +271,39 @@ function getTime(ts) {
   return new Date(ts || Date.now()).toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' });
 }
 
+// دوال الرد
+function setReply(sender, text) {
+  replyingTo = { sender, text };
+  document.getElementById('rpSender').textContent = sender;
+  document.getElementById('rpText').textContent = text;
+  document.getElementById('replyPreview').classList.add('active');
+  document.getElementById('msgIn').focus();
+}
+
+function cancelReply() {
+  replyingTo = null;
+  document.getElementById('replyPreview').classList.remove('active');
+}
+
 async function sendMsg() {
   const text = document.getElementById('msgIn').value.trim();
   if (!text || !myName) return;
   document.getElementById('msgIn').value = '';
   document.getElementById('msgIn').style.height = 'auto';
+  
   const { error } = await db.from('messages').insert({
     sender: myName,
     text: text,
     room: currentRoom,
     is_custom_font: useCustomFont,
     msg_type: 'text',
-    image_data: null
+    image_data: null,
+    reply_sender: replyingTo ? replyingTo.sender : null,
+    reply_text: replyingTo ? replyingTo.text : null
   });
+  
   if (error) { showToast('❌ خطأ: ' + error.message); console.error(error); }
+  else { cancelReply(); } // إلغاء وضع الرد بعد الإرسال
 }
 
 async function sendImg(event) {
@@ -272,10 +318,12 @@ async function sendImg(event) {
       room: currentRoom,
       is_custom_font: false,
       msg_type: 'image',
-      image_data: e.target.result
+      image_data: e.target.result,
+      reply_sender: replyingTo ? replyingTo.sender : null,
+      reply_text: replyingTo ? replyingTo.text : null
     });
     if (error) showToast('❌ فشل رفع الصورة');
-    else showToast('✓ تم إرسال الصورة');
+    else { showToast('✓ تم إرسال الصورة'); cancelReply(); }
   };
   reader.readAsDataURL(file);
   event.target.value = '';
@@ -331,23 +379,45 @@ function appendMsg(m, scroll = true) {
   const div = document.createElement('div');
   div.className = 'msg-group';
 
-  if (m.msg_type === 'image') {
-    div.innerHTML = `
-      <div class="bubble ${side}">
-        ${!isMe ? '<div class="sender-name">'+esc(m.sender)+'</div>' : ''}
-        <img src="${m.image_data}" class="msg-image" />
+  // تجهيز شكل "الرسالة المردود عليها" بداخل الفقاعة
+  let replyHTML = '';
+  if (m.reply_sender && m.reply_text) {
+    replyHTML = `
+      <div class="msg-reply" onclick="showToast('هذه رسالة مقتبسة')">
+        <div class="msg-reply-sender">${esc(m.reply_sender)}</div>
+        <div class="msg-reply-text">${esc(m.reply_text)}</div>
       </div>
-      <div class="msg-meta ${side}"><span>${getTime(m.created_at)}</span>${isMe?'<span class="check">✓✓</span>':''}</div>
-    `;
-  } else {
-    div.innerHTML = `
-      <div class="bubble ${side} ${cf}">
-        ${!isMe ? '<div class="sender-name">'+esc(m.sender)+'</div>' : ''}
-        ${esc(m.text).replace(/\n/g,'<br>')}
-      </div>
-      <div class="msg-meta ${side}"><span>${getTime(m.created_at)}</span>${isMe?'<span class="check">✓✓</span>':''}</div>
     `;
   }
+
+  // محتوى الرسالة الأصلية
+  let contentHTML = '';
+  if (m.msg_type === 'image') {
+    contentHTML = `${replyHTML}<img src="${m.image_data}" class="msg-image" />`;
+  } else {
+    contentHTML = `${replyHTML}${esc(m.text).replace(/\n/g,'<br>')}`;
+  }
+
+  // النص اللي راح يظهر بالشريط من تضغط "رد"
+  const replyTextArg = m.msg_type === 'image' ? '📷 صورة' : m.text;
+  const escapedSender = esc(m.sender).replace(/'/g, "\\'");
+  const escapedTextArg = esc(replyTextArg).replace(/'/g, "\\'").replace(/\n/g, " ");
+  
+  // زر الرد
+  const replyBtnHTML = `<button class="reply-btn" onclick="setReply('${escapedSender}', '${escapedTextArg}')" title="رد">↩️</button>`;
+
+  div.innerHTML = `
+    <div class="bubble ${side} ${cf}">
+      ${!isMe ? '<div class="sender-name">'+esc(m.sender)+'</div>' : ''}
+      ${contentHTML}
+    </div>
+    <div class="msg-meta ${side}">
+      ${!isMe ? replyBtnHTML : ''}
+      <span>${getTime(m.created_at)}</span>
+      ${isMe ? replyBtnHTML + '<span class="check">✓✓</span>' : ''}
+    </div>
+  `;
+  
   c.appendChild(div);
   if (scroll) c.scrollTop = c.scrollHeight;
   updatePreview(m);
