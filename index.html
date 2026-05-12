@@ -94,7 +94,6 @@ body{background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:h
 .rp-close:hover { color: #ff4757; background: rgba(255,71,87,0.1); }
 
 /* REACTIONS PURPLE THEME */
-/* هذا الفلتر السحري يحول أي إيموجي إلى لون بنفسجي متوهج */
 .purple-emoji { filter: sepia(1) hue-rotate(220deg) saturate(3) drop-shadow(0 0 4px rgba(139, 92, 246, 0.4)); font-family: sans-serif !important;} 
 
 .react-popup { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) scale(0.9); background: linear-gradient(135deg, var(--purple-d), var(--sidebar)); border: 1px solid var(--purple-l); border-radius: 30px; padding: 10px 20px; display: flex; gap: 15px; opacity: 0; pointer-events: none; transition: 0.2s; z-index: 1000; box-shadow: 0 5px 20px rgba(139,92,246,0.3); }
@@ -227,7 +226,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let myName = '', myPass = '', currentRoom = 'room1', sub = null;
+let myName = '', currentRoom = 'room1', sub = null;
 let replyingTo = null;
 let activeReactMsgId = null; 
 
@@ -237,7 +236,7 @@ window.onload = () => {
   const savedPass = localStorage.getItem('chatPass');
   const savedRoom = localStorage.getItem('chatRoom');
   
-  if (savedName && savedPass && savedRoom) {
+  if (savedName && savedPass === 'امنه' && savedRoom) {
     document.getElementById('nameInput').value = savedName;
     document.getElementById('passInput').value = savedPass;
     document.getElementById('roomSel').value = savedRoom;
@@ -255,36 +254,20 @@ async function startChat() {
   if (!name) { document.getElementById('nameInput').focus(); return; }
   if (!pass) { document.getElementById('passInput').focus(); return; }
   
-  document.getElementById('enterBtn').textContent = "جاري التحقق...";
-  
-  // التحقق من قاعدة البيانات (جدول الحسابات)
-  const { data: user, error: fetchErr } = await db.from('chat_users').select('*').eq('username', name).single();
-  
-  if (user) {
-    // الحساب موجود، نفحص الرمز
-    if (user.password !== pass) {
-      showToast('❌ كلمة المرور خاطئة!');
-      document.getElementById('enterBtn').textContent = "دخول ←";
-      return;
-    }
-  } else {
-    // حساب جديد، نسجله بالقاعدة
-    const { error: insErr } = await db.from('chat_users').insert({ username: name, password: pass });
-    if (insErr) { 
-      showToast('❌ خطأ بإنشاء الحساب'); 
-      document.getElementById('enterBtn').textContent = "دخول ←";
-      return; 
-    }
-    showToast('✓ تم إنشاء الحساب بنجاح');
+  // التعديل: كلمة سر موحدة لكل الموقع للخصوصية
+  if (pass !== 'امنه') {
+    showToast('❌ كلمة المرور خاطئة! الموقع خاص.');
+    return;
   }
   
+  document.getElementById('enterBtn').textContent = "جاري التحقق...";
+  
   myName = name;
-  myPass = pass;
   currentRoom = document.getElementById('roomSel').value;
   
-  // حفظ البيانات
+  // حفظ البيانات لتسهيل الدخول المرة القادمة
   localStorage.setItem('chatUser', myName);
-  localStorage.setItem('chatPass', myPass);
+  localStorage.setItem('chatPass', pass);
   localStorage.setItem('chatRoom', currentRoom);
 
   document.getElementById('modal').style.display = 'none';
@@ -323,7 +306,7 @@ function getTime(ts) {
 
 // ---------------- نظام التفاعلات ---------------- //
 function openReactPopup(event, msgId) {
-  event.stopPropagation(); // منع الإغلاق التلقائي
+  event.stopPropagation();
   activeReactMsgId = msgId;
   const popup = document.getElementById('reactPopup');
   popup.classList.add('show');
@@ -339,26 +322,20 @@ async function addReaction(emoji) {
   const msgId = activeReactMsgId;
   closeReactPopup();
   
-  // جلب التفاعلات الحالية من القاعدة
   const { data } = await db.from('messages').select('reactions').eq('id', msgId).single();
   let reacts = data.reactions || {};
   
-  // نظام (إضافة/إزالة) التفاعل
   if (!reacts[emoji]) reacts[emoji] = [];
   if (reacts[emoji].includes(myName)) {
-    // إذا كنت ضايفه مسبقاً، نحذفه
     reacts[emoji] = reacts[emoji].filter(n => n !== myName);
     if (reacts[emoji].length === 0) delete reacts[emoji];
   } else {
-    // إضافة التفاعل
     reacts[emoji].push(myName);
   }
   
-  // رفع التحديث للقاعدة
   await db.from('messages').update({ reactions: reacts }).eq('id', msgId);
 }
 
-// رسم التفاعلات أسفل الرسالة
 function renderReactions(msgId, reactsObj) {
   const container = document.getElementById('reacts-' + msgId);
   if (!container) return;
@@ -372,7 +349,6 @@ function renderReactions(msgId, reactsObj) {
     const count = users.length;
     const isMe = users.includes(myName);
     const activeClass = isMe ? 'active-react' : '';
-    // رسم الشارة (Badge) بلون بنفسجي
     html += `<span class="react-badge ${activeClass}" onclick="addReactionDirect('${msgId}', '${emoji}')"><span class="purple-emoji" style="font-family:sans-serif!important">${emoji}</span> ${count}</span>`;
   }
   container.innerHTML = html;
@@ -474,7 +450,6 @@ function subscribeRealtime() {
         if (msgDiv) msgDiv.remove();
       }
       else if (payload.eventType === 'UPDATE') {
-        // تحديث التفاعلات بشكل فوري عند الطرفين
         renderReactions(payload.new.id, payload.new.reactions);
       }
       
@@ -503,6 +478,9 @@ function appendMsg(m, scroll = true) {
   const c = document.getElementById('msgs');
   const isMe = m.sender === myName;
   const side = isMe ? 'me' : 'them';
+  const alignSide = isMe ? 'flex-start' : 'flex-end';
+  const marginSide = isMe ? 'margin-right: 14px;' : 'margin-left: 14px;';
+  
   const div = document.createElement('div');
   div.className = 'msg-group';
   div.id = 'msg-' + m.id;
@@ -528,7 +506,6 @@ function appendMsg(m, scroll = true) {
   const escapedSender = esc(m.sender).replace(/'/g, "\\'");
   const escapedTextArg = esc(replyTextArg).replace(/'/g, "\\'").replace(/\n/g, " ");
   
-  // الأزرار: رد، وتفاعل، ومسح (إذا كانت رسالتك)
   const reactBtnHTML = `<button class="reply-btn" onclick="openReactPopup(event, '${m.id}')" title="تفاعل">➕</button>`;
   const replyBtnHTML = `<button class="reply-btn" onclick="setReply('${escapedSender}', '${escapedTextArg}')" title="رد">↩️</button>`;
   const delBtnHTML = `<button class="reply-btn del-btn" style="color:var(--dim); opacity:0.8" onclick="deleteMessage('${m.id}')" title="مسح">🗑️</button>`;
@@ -538,7 +515,7 @@ function appendMsg(m, scroll = true) {
       ${!isMe ? '<div class="sender-name">'+esc(m.sender)+'</div>' : ''}
       ${contentHTML}
     </div>
-    <div id="reacts-${m.id}" class="reactions-container"></div>
+    <div id="reacts-${m.id}" class="reactions-container" style="align-self: ${alignSide}; ${marginSide}"></div>
     <div class="msg-meta ${side}">
       ${!isMe ? reactBtnHTML + replyBtnHTML : ''}
       ${isMe ? delBtnHTML + reactBtnHTML + replyBtnHTML : ''}
@@ -549,7 +526,6 @@ function appendMsg(m, scroll = true) {
   
   c.appendChild(div);
   
-  // رسم التفاعلات إذا كانت موجودة بالقاعدة
   renderReactions(m.id, m.reactions);
   
   if (scroll) c.scrollTop = c.scrollHeight;
